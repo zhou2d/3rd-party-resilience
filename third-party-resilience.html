@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Third-Party Resilience | DBS Bank</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --dbs-red: #E31837;
+            --dbs-red-dark: #B81230;
+            --dbs-red-light: #FF2D4D;
+            --dark-bg: #0A0A0F;
+            --dark-card: #12121A;
+            --dark-border: #1E1E2A;
+            --text-primary: #FFFFFF;
+            --text-secondary: #9CA3AF;
+            --accent-blue: #3B82F6;
+            --accent-green: #10B981;
+            --accent-yellow: #F59E0B;
+            --accent-purple: #8B5CF6;
+            --glow-red: rgba(227, 24, 55, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Background Effects */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(227, 24, 55, 0.15), transparent),
+                radial-gradient(ellipse 60% 40% at 100% 50%, rgba(59, 130, 246, 0.08), transparent),
+                radial-gradient(ellipse 60% 40% at 0% 80%, rgba(139, 92, 246, 0.06), transparent);
+        }
+
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 15, 0.8);
+            border-bottom: 1px solid var(--dark-border);
+            transition: all 0.3s ease;
+        }
+
+        nav.scrolled {
+            padding: 0.8rem 2rem;
+            background: rgba(10, 10, 15, 0.95);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo img {
+            height: 32px;
+        }
+
+        .logo-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--dbs-red);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 2rem 80px;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 900px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(227, 24, 55, 0.1);
+            border: 1px solid rgba(227, 24, 55, 0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            color: var(--dbs-red-light);
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--dbs-red);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .hero h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 0.8s ease 0.1s backwards;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--dbs-red-light), var(--dbs-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 2.5rem;
+            animation: fadeInUp 0.8s ease 0.2s backwards;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease 0.3s backwards;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--dbs-red), var(--dbs-red-dark));
+            color: white;
+            box-shadow: 0 4px 20px var(--glow-red);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--glow-red);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--dark-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--text-secondary);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+
+        .scroll-indicator svg {
+            width: 32px;
+            height: 32px;
+            color: var(--text-secondary);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
+
+        /* Section Styles */
+        section {
+            position: relative;
+            z-index: 1;
+            padding: 100px 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-tag {
+            display: inline-block;
+            padding: 6px 14px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Challenge Section */
+        #challenge {
+            background: linear-gradient(180deg, transparent, rgba(227, 24, 55, 0.03), transparent);
+        }
+
+        .challenge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .challenge-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .challenge-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--dbs-red), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .challenge-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(227, 24, 55, 0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .challenge-card:hover::before {
+            opacity: 1;
+        }
+
+        .challenge-card.objective {
+            background: linear-gradient(135deg, rgba(227, 24, 55, 0.1), transparent);
+            border-color: rgba(227, 24, 55, 0.2);
+        }
+
+        .card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .card-icon.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-yellow);
+        }
+
+        .card-icon.target {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+        }
+
+        .challenge-card h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .challenge-card ul {
+            list-style: none;
+        }
+
+        .challenge-card li {
+            padding: 0.6rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            color: var(--text-secondary);
+        }
+
+        .challenge-card li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--dbs-red);
+        }
+
+        /* Phases Section */
+        #phases {
+            padding-bottom: 60px;
+        }
+
+        .phase-nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .phase-tab {
+            padding: 12px 24px;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 50px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .phase-tab:hover {
+            border-color: var(--text-secondary);
+        }
+
+        .phase-tab.active {
+            background: linear-gradient(135deg, var(--dbs-red), var(--dbs-red-dark));
+            border-color: var(--dbs-red);
+            color: white;
+            box-shadow: 0 4px 20px var(--glow-red);
+        }
+
+        .phase-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .phase-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .phase-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .phase-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .phase-header h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .phase-header p {
+            color: var(--text-secondary);
+        }
+
+        /* Strategy Cards */
+        .strategy-grid {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .strategy-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .strategy-card:hover {
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .strategy-header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            border-bottom: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .strategy-card.expanded .strategy-header {
+            border-bottom-color: var(--dark-border);
+        }
+
+        .strategy-header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .strategy-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .strategy-icon.blue { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .strategy-icon.green { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+        .strategy-icon.yellow { background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow); }
+        .strategy-icon.purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+        .strategy-icon.red { background: rgba(227, 24, 55, 0.15); color: var(--dbs-red-light); }
+
+        .strategy-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .strategy-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .expand-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .strategy-card.expanded .expand-icon {
+            transform: rotate(180deg);
+            background: var(--dbs-red);
+        }
+
+        .strategy-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .strategy-card.expanded .strategy-body {
+            max-height: 1000px;
+        }
+
+        .strategy-body-inner {
+            padding: 2rem;
+        }
+
+        .feature-list {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .feature-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover {
+            background: rgba(255,255,255,0.04);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: rgba(227, 24, 55, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--dbs-red-light);
+        }
+
+        .feature-content h4 {
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .feature-content p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Runbook Section */
+        #runbook {
+            background: linear-gradient(180deg, transparent, rgba(59, 130, 246, 0.03), transparent);
+        }
+
+        .runbook-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .runbook-step {
+            display: flex;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .runbook-step:hover {
+            border-color: var(--accent-blue);
+            transform: translateX(10px);
+        }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            font-size: 1.1rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .step-content p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Governance Section */
+        #governance .strategy-grid {
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+
+        /* Summary Section */
+        #summary {
+            background: linear-gradient(180deg, transparent, rgba(227, 24, 55, 0.05));
+        }
+
+        .summary-table {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 3rem;
+        }
+
+        .summary-row {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .summary-row.header {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .summary-cell {
+            padding: 1.5rem;
+        }
+
+        .summary-cell.label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            border-right: 1px solid var(--dark-border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .summary-cell.actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+
+        .action-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .action-tag:hover {
+            background: rgba(227, 24, 55, 0.1);
+            border-color: var(--dbs-red);
+        }
+
+        .action-tag.completed {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .action-tag.completed .checkbox {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        /* Next Steps */
+        .next-steps {
+            text-align: center;
+        }
+
+        .next-steps h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+        }
+
+        .steps-timeline {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .timeline-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            max-width: 280px;
+        }
+
+        .timeline-number {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--dbs-red), var(--dbs-red-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.4rem;
+            box-shadow: 0 4px 20px var(--glow-red);
+        }
+
+        .timeline-text {
+            text-align: center;
+        }
+
+        .timeline-text h4 {
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .timeline-text p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        footer {
+            position: relative;
+            z-index: 1;
+            padding: 3rem 2rem;
+            text-align: center;
+            border-top: 1px solid var(--dark-border);
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .footer-logo {
+            height: 28px;
+            opacity: 0.7;
+        }
+
+        footer p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 100px 1rem 60px;
+            }
+
+            .challenge-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .phase-tab {
+                padding: 10px 16px;
+                font-size: 0.85rem;
+            }
+
+            .summary-row {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-cell.label {
+                border-right: none;
+                border-bottom: 1px solid var(--dark-border);
+            }
+
+            .steps-timeline {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* Animations on scroll */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="grid-overlay"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">
+                <img src="https://www.dbs.com.sg/iwov-resources/images/dbs-logo-v2.svg" alt="DBS Bank" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 40%22><text x=%2210%22 y=%2228%22 font-family=%22Arial%22 font-size=%2224%22 font-weight=%22bold%22 fill=%22%23E31837%22>DBS</text></svg>'">
+                <span class="logo-text">| SRE DR Governance</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#challenge">Challenge</a></li>
+                <li><a href="#phases">Phases</a></li>
+                <li><a href="#runbook">Runbook</a></li>
+                <li><a href="#governance">Governance</a></li>
+                <li><a href="#summary">Summary</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span>Strategic Framework</span>
+            </div>
+            <h1>Third-Party Resilience:<br><span>Containing Risk & Ensuring Service Continuity</span></h1>
+            <p class="hero-subtitle">A comprehensive framework for DR preparation to protect critical customer journeys and maintain service excellence</p>
+            <div class="hero-cta">
+                <a href="#phases" class="btn btn-primary">
+                    Explore Framework
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+                <a href="#summary" class="btn btn-secondary">View Summary</a>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M19 12l-7 7-7-7"/>
+            </svg>
+        </div>
+    </section>
+
+    <!-- Challenge Section -->
+    <section id="challenge">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-tag">Understanding the Problem</span>
+                <h2 class="section-title">The Challenge & The Goal</h2>
+                <p class="section-subtitle">Identifying our vulnerabilities and defining clear objectives for resilience</p>
+            </div>
+            <div class="challenge-grid">
+                <div class="challenge-card reveal">
+                    <div class="card-icon warning">⚠️</div>
+                    <h3>Our Vulnerability</h3>
+                    <ul>
+                        <li>Modern banking relies on a complex ecosystem of 3rd-party providers (payments, trading & settlement, data, etc.)</li>
+                        <li>An incident at a 3rd-party can directly impact our services, customer trust, and revenue</li>
+                        <li>A single point of failure is an unacceptable risk</li>
+                    </ul>
+                </div>
+                <div class="challenge-card objective reveal">
+                    <div class="card-icon target">🎯</div>
+                    <h3>Our Objective</h3>
+                    <ul>
+                        <li>Contain the impact of a 3rd-party incident</li>
+                        <li>Ensure continuity of critical customer journeys</li>
+                        <li>Build a robust defense-in-depth strategy</li>
+                        <li>Transform from reactive to proactive resilience</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Phases Section -->
+    <section id="phases">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-tag">Strategic Framework</span>
+                <h2 class="section-title">A Phased Approach to 3rd-party Resilience</h2>
+                <p class="section-subtitle">Building robust defense-in-depth through three key phases</p>
+            </div>
+
+            <div class="phase-nav reveal">
+                <button class="phase-tab active" data-phase="1">
+                    <span class="phase-number">1</span>
+                    Risk Assessment
+                </button>
+                <button class="phase-tab" data-phase="2">
+                    <span class="phase-number">2</span>
+                    Control & Recovery
+                </button>
+                <button class="phase-tab" data-phase="3">
+                    <span class="phase-number">3</span>
+                    DR Plan
+                </button>
+            </div>
+
+            <!-- Phase 1 Content -->
+            <div class="phase-content active" data-phase="1">
+                <div class="phase-header">
+                    <h3>Phase 1: Comprehensive Risk Assessment</h3>
+                    <p>Understand what we have and what the impact is</p>
+                </div>
+                <div class="strategy-grid">
+                    <div class="strategy-card">
+                        <div class="strategy-header" onclick="toggleStrategy(this)">
+                            <div class="strategy-header-left">
+                                <div class="strategy-icon blue">📋</div>
+                                <div>
+                                    <div class="strategy-title">Third-Party Dependency Inventory</div>
+                                    <div class="strategy-subtitle">Step 1: Know Your Dependencies</div>
+                                </div>
+                            </div>
+                            <div class="expand-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 9l6 6 6-6"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="strategy-body">
+                            <div class="strategy-body-inner">
+                                <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">A centralised catalogue of all external services. You can't manage what you don't measure.</p>
+                                <div class="feature-list">
+                                    <div class="feature-item">
+                                        <div class="feature-icon">🔌</div>
+                                        <div class="feature-content">
+                                            <h4>3rd-party Service Provided</h4>
+                                            <p>e.g., Payment Gateway, Credit Bureau, Trading & Settlement</p>
+                                        </div>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">🛤️</div>
+                                        <div class="feature-content">
+                                            <h4>Customer Journeys Impacted</h4>
+                                            <p>e.g., SGS Application, Online Payment, Account Opening</p>
+                                        </div>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">⭐</div>
+                                        <div class="feature-content">
+                                            <h4>Desired Tolerable Downtime</h4>
+                                            <p>DTDT0 | DTDT1 | DTDT2</p>
+                                        </div>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">🔗</div>
+                                        <div class="feature-content">
+                                            <h4>Integration Type</h4>
+                                            <p>API Call, Realtime Messaging, File Transfer</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="strategy-card">
+                        <div class="strategy-header" onclick="toggleStrategy(this)">
+                            <div class="strategy-header-left">
+                                <div class="strategy-icon green">📊</div>
+                                <div>
+                                    <div class="strategy-title">Business Impact Analysis (BIA)</div>
+                                    <div class="strategy-subtitle">Step 2: Quantify the Impact</div>
+                                </div>
+                            </div>
+                            <div class="expand-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 9l6 6 6-6"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="strategy-body">
+                            <div class="strategy-body-inner">
+                                <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">For each critical customer journey, analyze the cost of disruption.</p>
+                                <div class="feature-list">
+                                    <div class="feature-item">
+                                        <div class="feature-icon">💰</div>
+                                        <div class="feature-content">
+                                            <h4>Financial Impact</h4>
+                                            <p>Revenue loss, penalties, compensation costs</p>
+                                        </div>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">📢</div>
+                                        <div class="feature-content">
+                                            <h4>Reputational Impact</h4>
+                                            <p>Customer churn, negative press, brand damage</p>
+                                        </div>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">⚖️</div>
+                                        <div class="feature-content">
+                                            <h4>Regulatory Impact</h4>
+                                            <p>SLA breaches, compliance failures, regulatory scrutiny</p>
+                                        </div>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">⏱️</div>
+                                        <div class="feature-content">
+                                            <h4>Recovery Metrics</h4>
+                                            <p>RTO: How fast must we recover? | RPO: How much data can we lose?</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 2 Content -->
+            <div class="phase-content" data-phase="2">
+                <div class="phase-header">
+                    <h3>Phase 2: Design Control & Recovery Strategies</h3>
+                    <p>Build the technical and operational solutions</p>
+                </div>
+                <div class="strategy-grid">
+                    <div class="strategy-card">
+                        <div class="strategy-header" onclick="toggleStrategy(this)">
+                            <div class="strategy-header-left">
+                                <div class="strategy-icon red">🛡️</div>
+                                <div>
+                                    <div class="strategy-title">1. Immediate Impact Control</div>
+                                    <div class="strategy-subtitle">Strategy 1: Containment & Graceful Degradation</div>
+                                </div>
+                            </div>
+                            <div class="expand-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 9l6 6 6-6"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="strategy-body">
+                            <div class="strategy-body-inner">
+                                <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">Goal: Prevent the 3rd-party's issue from crashing our systems.</p>
+                                <div class="feature-list">
+                                    <div class="feature-item">
+                                        <div class="feature-icon">⚡</div>
+                                        <div class="feature-content">
+                                            <h4>Circuit Breakers</h4>
+                                            <p>Automatically "trip" to stop sending requests to a failing service. Protects our systems from cascading failures.</p>
+                                        </div>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">📉</div>
+                                        <div class="feature-content">
+                                            <h4>Graceful Service Degradation</h4>
+                                            <p>Instead of a hard error, offer a limited but functional experience. Example: "CPFB is down, we will process your SGS application manually."</p>
+                                        </div>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">📱</div>
+                                        <div class="feature-content">
+                                            <h4>Proactive Customer Communication</h4>
+                                            <p>Use in-app banners, SMS, and email to inform customers immediately. Reduces anxiety and inbound calls.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="strategy-card">
+                        <div class="strategy-header" onclick="toggleStrategy(this)">
+                            <div class="strategy-header-left">
+                                <div class="strategy-icon purple">🔄</div>
+                                <div>
+                                    <div class="strategy-title">Active Recovery</div>
+                                    <div class="strategy-subtitle">Strategy 2: Service Redundancy & Failover</div>
+                                </div>
+                            </div>
+                            <div class="expand-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 9l6 6 6-6"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="strategy-body">
+                            <div class="strategy-body-inner">
+                                <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">Goal: Have a backup plan ready to go.</p>
+                                <div class="feature-list">
+                                    <div class="feature-item">
+                                        <div class="feature-icon">🔀</div>
+                                        <div class="feature-content">
+                                            <h4>Alternative 3rd-Party Providers</h4>
+                                            <p>Contract with a secondary provider for Tier 1 & 2 services. Architect systems to easily switch API endpoints (manual or automated).</p>
+                                        </div>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">🏢</div>
+                                        <div class="feature-content">
+                                            <h4>Connect to 3rd-Party's DR Centre</h4>
+                                            <p>Contractually obligate providers to have a DR endpoint. Requires joint testing and validation.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="strategy-card">
+                        <div class="strategy-header" onclick="toggleStrategy(this)">
+                            <div class="strategy-header-left">
+                                <div class="strategy-icon yellow">👥</div>
+                                <div>
+                                    <div class="strategy-title">Business Continuity</div>
+                                    <div class="strategy-subtitle">Strategy 3: Internal Workarounds & Manual Processes</div>
+                                </div>
+                            </div>
+                            <div class="expand-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 9l6 6 6-6"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="strategy-body">
+                            <div class="strategy-body-inner">
+                                <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">Goal: When technology fails, people step in.</p>
+                                <div class="feature-list">
+                                    <div class="feature-item">
+                                        <div class="feature-icon">🛤️</div>
+                                        <div class="feature-content">
+                                            <h4>Alternative Customer Avenues</h4>
+                                            <p>Map out and communicate other ways to bank (e.g., use the mobile app, call the center, visit a branch). Ensure staff are trained to guide customers.</p>
+                                        </div>
+                                    </div>
+                                    <div class="feature-item">
+                                        <div class="feature-icon">✋</div>
+                                        <div class="feature-content">
+                                            <h4>Manual Service by the Bank</h4>
+                                            <p>Empower back-office teams to manually process critical transactions. Requires secure access, clear procedures, and a post-incident reconciliation plan.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 3 Content -->
+            <div class="phase-content" data-phase="3">
+                <div class="phase-header">
+                    <h3>Phase 3: Build & Maintain the DR Plan</h3>
+                    <p>Ensure our plans are actionable, tested, and governed</p>
+                </div>
+                <div class="strategy-grid">
+                    <div class="strategy-card expanded">
+                        <div class="strategy-header" onclick="toggleStrategy(this)">
+                            <div class="strategy-header-left">
+                                <div class="strategy-icon blue">📖</div>
+                                <div>
+                                    <div class="strategy-title">Detailed Runbooks</div>
+                                    <div class="strategy-subtitle">From Plan to Action</div>
+                                </div>
+                            </div>
+                            <div class="expand-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 9l6 6 6-6"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="strategy-body">
+                            <div class="strategy-body-inner">
+                                <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">For each critical 3rd-party dependency, create a step-by-step guide:</p>
+                                <div id="runbook-steps" class="runbook-steps">
+                                    <div class="runbook-step">
+                                        <div class="step-number">1</div>
+                                        <div class="step-content">
+                                            <h4>Contacts</h4>
+                                            <p>Who to call (internal & external stakeholders)</p>
+                                        </div>
+                                    </div>
+                                    <div class="runbook-step">
+                                        <div class="step-number">2</div>
+                                        <div class="step-content">
+                                            <h4>Detection</h4>
+                                            <p>How to confirm the outage and assess severity</p>
+                                        </div>
+                                    </div>
+                                    <div class="runbook-step">
+                                        <div class="step-number">3</div>
+                                        <div class="step-content">
+                                            <h4>Decision Tree</h4>
+                                            <p>Clear flowchart for actions (e.g., Failover → Manual Process)</p>
+                                        </div>
+                                    </div>
+                                    <div class="runbook-step">
+                                        <div class="step-number">4</div>
+                                        <div class="step-content">
+                                            <h4>Procedures</h4>
+                                            <p>Detailed commands and process steps</p>
+                                        </div>
+                                    </div>
+                                    <div class="runbook-step">
+                                        <div class="step-number">5</div>
+                                        <div class="step-content">
+                                            <h4>Recovery</h4>
+                                            <p>Steps to switch back and conduct a post-mortem</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Governance Section -->
+    <section id="governance">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-tag">Long-Term Success</span>
+                <h2 class="section-title">Governance Framework</h2>
+                <p class="section-subtitle">A plan is only as good as its governance</p>
+            </div>
+            <div class="strategy-grid reveal">
+                <div class="strategy-card">
+                    <div class="strategy-header" onclick="toggleStrategy(this)">
+                        <div class="strategy-header-left">
+                            <div class="strategy-icon green">📝</div>
+                            <div>
+                                <div class="strategy-title">Contractual SLAs</div>
+                                <div class="strategy-subtitle">Embed resilience requirements in contracts</div>
+                            </div>
+                        </div>
+                        <div class="expand-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="strategy-body">
+                        <div class="strategy-body-inner">
+                            <div class="feature-list">
+                                <div class="feature-item">
+                                    <div class="feature-icon">⏱️</div>
+                                    <div class="feature-content">
+                                        <h4>RTO/RPO Requirements</h4>
+                                        <p>Define strict recovery time and point objectives in all vendor contracts</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <div class="feature-icon">🔔</div>
+                                    <div class="feature-content">
+                                        <h4>Notification Requirements</h4>
+                                        <p>Mandate immediate incident notification within defined timeframes</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <div class="feature-icon">🔍</div>
+                                    <div class="feature-content">
+                                        <h4>Audit Rights</h4>
+                                        <p>Include penalties for non-compliance and audit rights</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="strategy-card">
+                    <div class="strategy-header" onclick="toggleStrategy(this)">
+                        <div class="strategy-header-left">
+                            <div class="strategy-icon purple">🧪</div>
+                            <div>
+                                <div class="strategy-title">Regular Testing & Drills</div>
+                                <div class="strategy-subtitle">Validate readiness through exercises</div>
+                            </div>
+                        </div>
+                        <div class="expand-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="strategy-body">
+                        <div class="strategy-body-inner">
+                            <div class="feature-list">
+                                <div class="feature-item">
+                                    <div class="feature-icon">🗓️</div>
+                                    <div class="feature-content">
+                                        <h4>Tabletop Exercises</h4>
+                                        <p>Quarterly scenario walkthroughs with key stakeholders</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <div class="feature-icon">🔄</div>
+                                    <div class="feature-content">
+                                        <h4>Technical Failover Tests</h4>
+                                        <p>Annual tests of switching to secondary providers</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="strategy-card">
+                    <div class="strategy-header" onclick="toggleStrategy(this)">
+                        <div class="strategy-header-left">
+                            <div class="strategy-icon yellow">📡</div>
+                            <div>
+                                <div class="strategy-title">Ongoing Monitoring</div>
+                                <div class="strategy-subtitle">Proactive visibility into 3rd-party health</div>
+                            </div>
+                        </div>
+                        <div class="expand-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="strategy-body">
+                        <div class="strategy-body-inner">
+                            <div class="feature-list">
+                                <div class="feature-item">
+                                    <div class="feature-icon">📈</div>
+                                    <div class="feature-content">
+                                        <h4>API Performance Monitoring</h4>
+                                        <p>Proactively monitor 3rd-party API performance and uptime. Know about an issue before they do.</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <div class="feature-icon">🚨</div>
+                                    <div class="feature-content">
+                                        <h4>Alerting & Dashboards</h4>
+                                        <p>Real-time visibility into service health with automated alerting</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Summary Section -->
+    <section id="summary">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-tag">Action Plan</span>
+                <h2 class="section-title">Summary & Next Steps</h2>
+                <p class="section-subtitle">Our path to resilience with clear action items</p>
+            </div>
+
+            <div class="summary-table reveal">
+                <div class="summary-row header">
+                    <div class="summary-cell label">
+                        <span>Area</span>
+                    </div>
+                    <div class="summary-cell">
+                        <span style="font-weight: 600;">Key Actions</span>
+                    </div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-cell label">
+                        <span style="color: var(--accent-blue);">📊</span>
+                        1. Assessment
+                    </div>
+                    <div class="summary-cell actions">
+                        <div class="action-tag" onclick="toggleAction(this)">
+                            <div class="checkbox">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <path d="M20 6L9 17l-5-5"/>
+                                </svg>
+                            </div>
+                            Build Dependency Inventory
+                        </div>
+                        <div class="action-tag" onclick="toggleAction(this)">
+                            <div class="checkbox">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <path d="M20 6L9 17l-5-5"/>
+                                </svg>
+                            </div>
+                            Tier Services & Conduct BIA
+                        </div>
+                    </div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-cell label">
+                        <span style="color: var(--dbs-red-light);">🛡️</span>
+                        2. Controls
+                    </div>
+                    <div class="summary-cell actions">
+                        <div class="action-tag" onclick="toggleAction(this)">
+                            <div class="checkbox">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <path d="M20 6L9 17l-5-5"/>
+                                </svg>
+                            </div>
+                            Implement Circuit Breakers
+                        </div>
+                        <div class="action-tag" onclick="toggleAction(this)">
+                            <div class="checkbox">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <path d="M20 6L9 17l-5-5"/>
+                                </svg>
+                            </div>
+                            Architect for Failover & Manual Processes
+                        </div>
+                    </div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-cell label">
+                        <span style="color: var(--accent-green);">📝</span>
+                        3. Governance
+                    </div>
+                    <div class="summary-cell actions">
+                        <div class="action-tag" onclick="toggleAction(this)">
+                            <div class="checkbox">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <path d="M20 6L9 17l-5-5"/>
+                                </svg>
+                            </div>
+                            Strengthen Contracts & Runbooks
+                        </div>
+                        <div class="action-tag" onclick="toggleAction(this)">
+                            <div class="checkbox">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <path d="M20 6L9 17l-5-5"/>
+                                </svg>
+                            </div>
+                            Institute Regular Testing & Monitoring
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="next-steps reveal">
+                <h3>Next Steps</h3>
+                <div class="steps-timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-number">1</div>
+                        <div class="timeline-text">
+                            <h4>Form Working Group</h4>
+                            <p>Cross-functional team (Tech, Business, Risk)</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-number">2</div>
+                        <div class="timeline-text">
+                            <h4>Build Inventory</h4>
+                            <p>Initiate the Third-Party Dependency Inventory</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-number">3</div>
+                        <div class="timeline-text">
+                            <h4>Prioritize & Design</h4>
+                            <p>Focus on Tier 1 services for initial BIA and control design</p>
+                        </div>
+                    </div>
+                </div>
+                <a href="#challenge" class="btn btn-primary">
+                    Start From Beginning
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 19V5M5 12l7-7 7 7"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <img src="https://www.dbs.com.sg/iwov-resources/images/dbs-logo-v2.svg" alt="DBS Bank" class="footer-logo" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 40%22><text x=%2210%22 y=%2228%22 font-family=%22Arial%22 font-size=%2224%22 font-weight=%22bold%22 fill=%22%23E31837%22>DBS</text></svg>'">
+            <p>Third-Party Resilience Framework | Technology Risk Management</p>
+            <p style="font-size: 0.8rem; opacity: 0.6;">© 2024 DBS Bank Ltd. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Navigation scroll effect
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+
+        // Phase tabs
+        const phaseTabs = document.querySelectorAll('.phase-tab');
+        const phaseContents = document.querySelectorAll('.phase-content');
+
+        phaseTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const phase = tab.dataset.phase;
+                
+                phaseTabs.forEach(t => t.classList.remove('active'));
+                phaseContents.forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.querySelector(`.phase-content[data-phase="${phase}"]`).classList.add('active');
+            });
+        });
+
+        // Strategy card expand/collapse
+        function toggleStrategy(header) {
+            const card = header.closest('.strategy-card');
+            card.classList.toggle('expanded');
+        }
+
+        // Action tag toggle
+        function toggleAction(tag) {
+            tag.classList.toggle('completed');
+        }
+
+        // Scroll reveal animation
+        const revealElements = document.querySelectorAll('.reveal');
+        
+        const revealOnScroll = () => {
+            revealElements.forEach(el => {
+                const elementTop = el.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                
+                if (elementTop < windowHeight - 100) {
+                    el.classList.add('visible');
+                }
+            });
+        };
+
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll(); // Initial check
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
